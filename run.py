@@ -18,7 +18,7 @@ import argparse
 from datasets import DatasetDict, concatenate_datasets
 from transformers import AutoTokenizer
 
-from data_utils import CQADatasetLoader, SVAMPDatasetLoader, ESNLIDatasetLoader, ANLI1DatasetLoader, ASDivDatasetLoader
+from data_utils import CQADatasetLoader, CMGDatasetLoader, SVAMPDatasetLoader, ESNLIDatasetLoader, ANLI1DatasetLoader, ASDivDatasetLoader
 from metrics import compute_text_acc, compute_equation_acc, compute_metrics_text, compute_metrics_equation, compute_metrics_text_aux, compute_metrics_equation_aux
 from train_utils import train_and_evaluate
 from util import FILE_ADD, FILE_DELETE, FILE_END, REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END
@@ -33,6 +33,8 @@ def run(args):
         dataset_loader = ESNLIDatasetLoader()
     elif args.dataset == 'anli1':
         dataset_loader = ANLI1DatasetLoader()
+    elif args.dataset == 'cmg':
+        dataset_loader = CMGDatasetLoader()
     elif args.dataset == 'asdiv':  # NOTE: for augmenting SVAMP only
         dataset_loader = SVAMPDatasetLoader()
         dataset_loader_svamp = SVAMPDatasetLoader()

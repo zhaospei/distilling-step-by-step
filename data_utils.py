@@ -152,22 +152,14 @@ class CMGDatasetLoader(DatasetLoader):
 
 
     def _parse_llm_output(self, output):
-        rationale = output.split("Answer:")[0].rstrip()
-        try:
-            label = output.split("Answer: ")[1].split("Premise")[0].rstrip()
-        except:
-            label = ' '
-
+        rationale = output['rationale']
+        label = output['label']
         return rationale, label
 
     
     def _parse_gpt_output(self, output):
-        rationale = output.split("Answer:")[0].rstrip().lstrip()
-        try:
-            label = output.split("Answer: ")[1].split("Premise")[0].rstrip()
-        except:
-            label = ' '
-
+        rationale = output['rationale']
+        label = output['label']
         return rationale, label
 
 class CQADatasetLoader(DatasetLoader):
