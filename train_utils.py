@@ -16,6 +16,7 @@
 import os
 import shutil
 import logging
+import numpy as np
 
 from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer
 from transformers import T5ForConditionalGeneration
@@ -23,6 +24,7 @@ from transformers import DataCollatorForSeq2Seq
 from transformers.trainer_utils import set_seed
 
 from model_utils import TaskPrefixDataCollator, TaskPrefixTrainer
+from util import FILE_ADD, FILE_DELETE, FILE_END, REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END
 
 
 def get_config_dir(args):
@@ -31,8 +33,12 @@ def get_config_dir(args):
 
 def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics):
     set_seed(run)
+    # print(compute_metrics)
 
     model = T5ForConditionalGeneration.from_pretrained(args.from_pretrained)
+    special_tokens_dict = {'additional_special_tokens': [REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END]}
+    tokenizer.add_special_tokens(special_tokens_dict)
+    model.resize_token_embeddings(len(tokenizer))
 
     if args.parallelize:
         model.parallelize()
@@ -62,7 +68,8 @@ def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics
         logging_dir=logging_dir,
         logging_strategy=logging_strategy,
         logging_steps=args.eval_steps,
-        max_steps=args.max_steps,
+        num_train_epochs = 10.0,
+        # max_steps=args.max_steps,
         learning_rate=args.lr,
         gradient_accumulation_steps=args.grad_steps,
         per_device_train_batch_size=args.batch_size,
@@ -73,6 +80,7 @@ def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics
         bf16=args.bf16,
         generation_max_length=args.gen_max_len,
         prediction_loss_only=False,
+        # load_best_model_at_end=True,
     )
 
     if args.model_type == 'task_prefix':
@@ -89,7 +97,7 @@ def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics
         'model': model,
         'args': training_args,
         'train_dataset': tokenized_datasets["train"],
-        'eval_dataset': {'test': tokenized_datasets["test"],},
+        'eval_dataset': {'valid': tokenized_datasets["valid"],},
         'data_collator': data_collator,
         'tokenizer': tokenizer,
         'compute_metrics': compute_metrics,
@@ -107,3 +115,19 @@ def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics
     
 
     trainer.train()
+
+    trainer.save_model('tmp/sota-output')
+    predict_results = trainer.predict(
+            tokenized_datasets["test"], metric_key_prefix="predict", max_length=32, num_beams=10
+        )
+
+    predictions = predict_results.predictions
+    # decoded_preds = tokenizer.batch_decode(predictions[0], skip_special_tokens=True)
+    # predictions = np.where(predictions[0] != -100, predictions[0], tokenizer.pad_token_id)
+    predictions = tokenizer.batch_decode(
+        predictions[0], skip_special_tokens=True, clean_up_tokenization_spaces=True
+    )
+    predictions = [pred.strip() for pred in predictions]
+    output_prediction_file = os.path.join(training_args.output_dir, "generated_predictions.txt")
+    with open(output_prediction_file, "w", encoding="utf-8") as writer:
+        writer.write("\n".join(predictions))

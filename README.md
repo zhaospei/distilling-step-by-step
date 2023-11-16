@@ -59,7 +59,7 @@ python run.py --from_pretrained google/t5-v1_1-base --dataset cqa --model_type s
 ```python
 python run.py --from_pretrained google/t5-v1_1-base --dataset cqa --model_type task_prefix --label_type llm --llm palm --alpha 0.5 --batch_size 64
 ```
-
+ python run.py --from_pretrained Salesforce/codet5-base --dataset cmg --model_type task_prefix --label_type gt --alpha 0.5 --batch_size 4
 ## Cite
 If you find this repository useful, please consider citing:
 ```bibtex

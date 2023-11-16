@@ -65,16 +65,17 @@ class DatasetLoader(object):
 
         if self.has_valid:
             data_files.update({'valid': f'{self.data_root}/{self.dataset_name}/{self.dataset_name}_valid.json',})
-
+        
+        # print(data_files)
         datasets = load_dataset('json', data_files=data_files)
         datasets = self._post_process(datasets) 
 
         # subsample training dataset if needed
-        num_train = len(datasets['train'])
-        idxs = list()
-        for idx in self.train_batch_idxs:
-            idxs += range(idx*self.batch_size, (idx+1)*self.batch_size)        
-        datasets['train'] = Dataset.from_dict(datasets['train'][[idx for idx in idxs if idx < num_train]])
+        # num_train = len(datasets['train'])
+        # idxs = list()
+        # for idx in self.train_batch_idxs:
+        #     idxs += range(idx*self.batch_size, (idx+1)*self.batch_size)        
+        # datasets['train'] = Dataset.from_dict(datasets['train'][[idx for idx in idxs if idx < num_train]])
 
         return datasets
 

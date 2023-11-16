@@ -14,6 +14,8 @@
 
 
 import numpy as np
+import evaluate
+from metric import smooth_bleu
 
 
 def compute_text_acc(preds, labels):
@@ -37,17 +39,56 @@ def eval_equation(equation):
 
 
 def compute_metrics_text(tokenizer):
-    def compute_metrics(eval_pred):
-        predictions, labels = eval_pred
+    # def postprocess_text(preds, labels):
+    #     preds = [pred.strip() for pred in preds]
+    #     labels = [[label.strip()] for label in labels]
+
+    # def compute_metrics(eval_pred):
+    #     predictions, labels = eval_pred
+    #     decoded_preds = tokenizer.batch_decode(predictions[0], skip_special_tokens=True)
+
+    #     labels = np.where(labels[0] != -100, labels[0], tokenizer.pad_token_id)
+    #     decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
+
+    #     decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
+
+    #     result = metric.compute(predictions=decoded_preds, references=decoded_labels)
+
+    #     return {'accuracy': acc}
+
+    # return compute_metrics
+
+    metric = evaluate.load("sacrebleu")
+
+    def compute_metrics(eval_preds):
+        predictions, labels = eval_preds
         decoded_preds = tokenizer.batch_decode(predictions[0], skip_special_tokens=True)
 
         labels = np.where(labels[0] != -100, labels[0], tokenizer.pad_token_id)
         decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
-        acc = np.mean(np.array(decoded_preds) == np.array(decoded_labels))
+        type_decoded_preds = tokenizer.batch_decode(predictions[1], skip_special_tokens=True)
 
-        return {'accuracy': acc}
+        type_labels = np.where(labels[1] != -100, labels[1], tokenizer.pad_token_id)
+        type_decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
 
+        acc = np.mean(np.array(type_decoded_preds) == np.array(type_decoded_labels))
+
+        # result = metric.compute(predictions=decoded_preds, references=decoded_labels)
+        dev_accs, predictions, gold_fn = [], [], []
+        with open('dev.output', 'w') as f, open('dev.gold', 'w') as f1:
+            for idx, (pred_nl, gold) in enumerate(zip(decoded_preds, decoded_labels)):
+                dev_accs.append(pred_nl.strip() == gold.strip())
+                predictions.append(str(idx) + '\t' + pred_nl)
+                gold_fn.append(str(idx) + '\t' + gold)
+                f.write(str(idx) + '\t' + pred_nl.strip() + '\n')
+                f1.write(str(idx) + '\t' + gold.strip() + '\n')
+        (goldMap, predictionMap) = smooth_bleu.computeMaps(predictions, gold_fn)
+        dev_bleu = round(smooth_bleu.bleuFromMaps(goldMap, predictionMap)[0], 2)
+        # logger.info("  %s = %s "%("codenn_bleu",str(dev_bleu)))
+        # logger.info("  "+"*"*20) 
+        return {'bleu': dev_bleu, 'acc': acc}
+    
     return compute_metrics
 
 
