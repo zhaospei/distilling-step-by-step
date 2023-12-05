@@ -17,6 +17,8 @@ import argparse
 
 from datasets import DatasetDict, concatenate_datasets
 from transformers import AutoTokenizer
+from util import FILE_ADD, FILE_DELETE, FILE_END, REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END
+
 
 from data_utils import CQADatasetLoader, CMGDatasetLoader, SVAMPDatasetLoader, ESNLIDatasetLoader, ANLI1DatasetLoader, ASDivDatasetLoader
 from metrics import compute_text_acc, compute_equation_acc, compute_metrics_text, compute_metrics_equation, compute_metrics_text_aux, compute_metrics_equation_aux
@@ -128,6 +130,8 @@ def run(args):
 
     #### Prepare datasets Prepare data for training
     tokenizer = AutoTokenizer.from_pretrained(args.from_pretrained)
+    special_tokens_dict = {'additional_special_tokens': [REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END]}
+    tokenizer.add_special_tokens(special_tokens_dict)
     # if 'nli' in args.dataset:
     #     datasets = datasets.map(
     #         lambda example: {'input': tokenizer.eos_token.join([example['premise'], example['hypothesis']])},

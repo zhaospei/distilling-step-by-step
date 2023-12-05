@@ -36,8 +36,7 @@ def train_and_evaluate(args, run, tokenizer, tokenized_datasets, compute_metrics
     # print(compute_metrics)
 
     model = T5ForConditionalGeneration.from_pretrained(args.from_pretrained)
-    special_tokens_dict = {'additional_special_tokens': [REPLACE, REPLACE_OLD, REPLACE_NEW,REPLACE_END,INSERT,INSERT_OLD,INSERT_NEW ,INSERT_END,DELETE,DELETE_END,KEEP,KEEP_END]}
-    tokenizer.add_special_tokens(special_tokens_dict)
+    
     model.resize_token_embeddings(len(tokenizer))
 
     if args.parallelize:
